@@ -1,0 +1,37 @@
+name: Morning Summary
+
+on:
+  schedule:
+    - cron: '0 5 * * *'  # 08:00 Moscow time (UTC+3)
+  workflow_dispatch:       # позволяет запустить вручную из GitHub
+
+jobs:
+  send-morning-summary:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r backend/requirements.txt
+
+      - name: Send morning summary
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python -c "
+          import asyncio
+          import sys
+          sys.path.insert(0, '.')
+          from bot.handlers.summary import send_morning_summary
+          asyncio.run(send_morning_summary())
+          "
